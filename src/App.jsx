@@ -1,120 +1,117 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useMemo, useState } from 'react'
+import {
+  Box,
+  Button,
+  Container,
+  Field,
+  Heading,
+  HStack,
+  Input,
+  Stat,
+  Text,
+  VStack,
+} from '@chakra-ui/react'
+import { isValidArgentinePlate, normalizePlate } from './utils/validate.js'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const totalSpots = 120
+  const [freeSpots, setFreeSpots] = useState(42)
+
+  const [plate, setPlate] = useState('')
+  const [plateTouched, setPlateTouched] = useState(false)
+
+  const plateIsValid = useMemo(() => isValidArgentinePlate(plate), [plate])
+  const plateIsInvalid = plateTouched && !plateIsValid
+
+  const almostFullThreshold = Math.max(1, Math.floor(totalSpots * 0.1))
+  const isAlmostFull = freeSpots <= almostFullThreshold
+
+  function handleIngreso() {
+    setPlateTouched(true)
+    if (!plateIsValid) return
+    setFreeSpots((current) => Math.max(0, current - 1))
+    setPlate('')
+    setPlateTouched(false)
+  }
+
+  function handleEgreso() {
+    setPlateTouched(true)
+    if (!plateIsValid) return
+    setFreeSpots((current) => Math.min(totalSpots, current + 1))
+    setPlate('')
+    setPlateTouched(false)
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <Box minH="100vh" bg="circuitStone" color="white">
+      <Box as="header" bg="deepGeometry" px={{ base: 4, md: 8 }} py={5}>
+        <Heading size="lg">Dashboard</Heading>
+      </Box>
 
-      <div className="ticks"></div>
+      <Container py={{ base: 6, md: 10 }}>
+        <VStack align="stretch" gap={6}>
+          <Box borderWidth="1px" borderColor="whiteAlpha.300" rounded="md" p={5}>
+            <Stat.Root>
+              <Stat.Label color="whiteAlpha.800">Lugares libres</Stat.Label>
+              <Stat.ValueText color="fractalChlorophyll" fontSize="5xl" lineHeight="1" fontWeight="800">
+                {freeSpots}
+              </Stat.ValueText>
+              <Stat.HelpText color="whiteAlpha.700">de {totalSpots}</Stat.HelpText>
+            </Stat.Root>
+          </Box>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+          {isAlmostFull ? (
+            <Text color="dataResin" fontWeight="700">
+              Estacionamiento casi lleno
+            </Text>
+          ) : null}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+          <Box borderWidth="1px" borderColor="whiteAlpha.300" rounded="md" p={5}>
+            <Field.Root invalid={plateIsInvalid} required>
+              <Field.Label color="whiteAlpha.800">Patente</Field.Label>
+              <Input
+                value={plate}
+                onChange={(e) => setPlate(normalizePlate(e.target.value))}
+                onBlur={() => setPlateTouched(true)}
+                placeholder="AA123BB"
+                autoComplete="off"
+                maxLength={7}
+                bg="blackAlpha.400"
+                borderColor="whiteAlpha.300"
+              />
+              {plateIsInvalid ? (
+                <Field.ErrorText>
+                  Patente inválida. Formatos válidos: AAA123, AA123BB, A123BCD.
+                </Field.ErrorText>
+              ) : (
+                <Field.HelperText color="whiteAlpha.700">
+                  Formatos: AAA123 / AA123BB / A123BCD
+                </Field.HelperText>
+              )}
+            </Field.Root>
+
+            <HStack mt={5} gap={3} flexWrap="wrap">
+              <Button
+                bg="digitalSky"
+                color="black"
+                _hover={{ bg: 'digitalSky' }}
+                onClick={handleIngreso}
+              >
+                Registrar Ingreso
+              </Button>
+              <Button
+                bg="digitalSky"
+                color="black"
+                _hover={{ bg: 'digitalSky' }}
+                onClick={handleEgreso}
+              >
+                Registrar Egreso
+              </Button>
+            </HStack>
+          </Box>
+        </VStack>
+      </Container>
+    </Box>
   )
 }
 
